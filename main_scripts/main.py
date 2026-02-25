@@ -49,12 +49,13 @@ def main():
     gripper_close = 90
 
     test_scenario = [
-        # Шаг 1: Потянуться вперед с открытым захватом
-        {"x": 0.5, "y": 0.00, "z": 4, "gripper": gripper_close, "steps": 200, "delay": 2.0},
-        {"x": 1, "y": 5.00, "z": 4, "gripper": gripper_open, "steps": 200, "delay": 2.0},
-        {"x": 0.5, "y": 8.00, "z": 4, "gripper": gripper_close, "steps": 200, "delay": 2.0},
-        {"x": 0, "y": 0.00, "z": 2, "gripper": gripper_open, "steps": 200, "delay": 2.0}
+        # x от -0.3 до 0.3, y от -0.3 до 0.3, z от 0.05 до 0,40
+         {"x": 0.15, "y": 0, "z": 0.15, "gripper": gripper_close, "steps": 200, "delay": 1.0, "text": "Положение 1"},
+         {"x": -0.15, "y": 0, "z": 0.15, "gripper": gripper_open, "steps": 200, "delay": 1.0, "text": "Положение 2"},
+        {"x": 0, "y": 0.00, "z": 0.2, "gripper": gripper_open, "steps": 200, "delay": 1.0, "text": 'Нулевое положение'}
     ]
+
+
 
     # ==========================================
     # ВЫПОЛНЕНИЕ СЦЕНАРИЯ
@@ -74,8 +75,11 @@ def main():
             target_y=step["y"],
             target_z=step["z"],
             gripper_angle=step["gripper"],
-            steps=step["steps"]
+            steps=step["steps"],
         )
+
+        if step['text'] is not None or not '':
+            print(step['text'])
 
         # Ждем указанное время перед следующим шагом
         if step["delay"] > 0:

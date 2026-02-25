@@ -27,7 +27,7 @@ class RobotSerial:
         data_string = ",".join(full_command) + "\n"
 
         self.arduino.write(data_string.encode('utf-8'))
-        print(f"Отправлено: {data_string.strip()}")
+        # print(f"Отправлено: {data_string.strip()}")
 
     def close(self):
         if self.arduino:
