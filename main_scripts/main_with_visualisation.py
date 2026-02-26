@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from kinematics import RobotArm
 from communicator import RobotSerial
 from trajectory import TrajectoryPlanner
-
+import configparser
 
 # --- ФУНКЦИЯ ВИЗУАЛИЗАЦИИ ---
 def visualize_robot(robot, current_angles_deg, target_coords=None):
@@ -70,9 +70,12 @@ def main():
 
     plt.ion()
 
+    robot_config = configparser.ConfigParser()
+
+    robot_config.read('config.ini')
     # Подключение к Arduino (или режим симуляции)
     try:
-        comms = RobotSerial(port='COM5')  # <--- ПРОВЕРЬ ПОРТ
+        comms = RobotSerial(port=robot_config['Arduino']['port'])  # <--- ПРОВЕРЬ ПОРТ
         time.sleep(2)
     except:
         print("Arduino не найдено! Работаю только в визуализации.")

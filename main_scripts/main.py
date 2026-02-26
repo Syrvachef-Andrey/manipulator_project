@@ -2,9 +2,9 @@ import time
 from kinematics import RobotArm
 from communicator import RobotSerial
 from trajectory import TrajectoryPlanner
+import configparser
 
-
-def move_robot_to(robot, planner, comms, current_angles, target_x, target_y, target_z, gripper_angle, steps=50):
+def move_robot_to(robot, planner, arduino_mcu, current_angles, target_x, target_y, target_z, gripper_angle, steps=50):
     """
     Универсальная функция для перемещения робота.
     Возвращает новые текущие углы после завершения движения.
@@ -20,7 +20,7 @@ def move_robot_to(robot, planner, comms, current_angles, target_x, target_y, tar
 
     # 3. Отправляем кадры на Arduino
     for frame_angles in trajectory:
-        comms.send_angles(frame_angles, gripper_angle)
+        arduino_mcu.send_angles(frame_angles, gripper_angle)
         time.sleep(0.02)  # Пауза 20 мс (50 кадров в секунду)
 
     return target_angles
@@ -29,7 +29,12 @@ def move_robot_to(robot, planner, comms, current_angles, target_x, target_y, tar
 def main():
     robot = RobotArm()
     planner = TrajectoryPlanner()
-    comms = RobotSerial(port='COM5')  # ВАЖНО: укажи свой COM-порт
+
+    my_config = configparser.ConfigParser()
+    my_config.read('config.ini')
+
+    arduino_mcu = RobotSerial(port=my_config['Arduino']['port'])  # ВАЖНО: укажи свой COM-порт
+
 
     time.sleep(2)  # Ждем перезагрузки Arduino
 
@@ -50,9 +55,9 @@ def main():
 
     test_scenario = [
         # x от -0.3 до 0.3, y от -0.3 до 0.3, z от 0.05 до 0,40
-         {"x": 0.15, "y": 0, "z": 0.15, "gripper": gripper_close, "steps": 200, "delay": 1.0, "text": "Положение 1"},
-         {"x": -0.15, "y": 0, "z": 0.15, "gripper": gripper_open, "steps": 200, "delay": 1.0, "text": "Положение 2"},
-        {"x": 0, "y": 0.00, "z": 0.2, "gripper": gripper_open, "steps": 200, "delay": 1.0, "text": 'Нулевое положение'}
+         {"x": 0.15, "y": 0, "z": 0.15, "gripper": gripper_close, "steps": 100, "delay": 1.0, "text": "Положение 1"},
+         {"x": -0.15, "y": 0, "z": 0.15, "gripper": gripper_open, "steps": 100, "delay": 1.0, "text": "Положение 2"},
+        {"x": 0, "y": 0.00, "z": 0.2, "gripper": gripper_open, "steps": 100, "delay": 1.0, "text": 'Нулевое положение'}
     ]
 
 
@@ -69,7 +74,7 @@ def main():
         current_angles = move_robot_to(
             robot=robot,
             planner=planner,
-            comms=comms,
+            arduino_mcu=arduino_mcu,
             current_angles=current_angles,
             target_x=step["x"],
             target_y=step["y"],
@@ -87,7 +92,7 @@ def main():
 
     print("\n--- СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН ---")
     time.sleep(1)
-    comms.close()
+    arduino_mcu.close()
 
 
 if __name__ == "__main__":
