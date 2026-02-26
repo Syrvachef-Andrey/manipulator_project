@@ -11,7 +11,8 @@ class RobotSerial:
             time.sleep(2)
         except Exception as e:
             print(f"Ошибка подключения к Arduino: {e}")
-            self.arduino = None
+            print("Arduino не найдено, выход из программы")
+            exit()
 
     def send_angles(self, angles_list, gripper_angle):
         """
