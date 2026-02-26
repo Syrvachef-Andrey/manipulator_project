@@ -3,28 +3,66 @@ import math
 import warnings
 from ikpy.chain import Chain
 from ikpy.link import OriginLink, URDFLink
-
+import configparser
 
 class RobotArm:
     def __init__(self):
+        self.chain_config = configparser.ConfigParser()
+        self.chain_config.read('config.ini')
         # Лимиты для сервоприводов: от -90 до +90 градусов (что равно 0-180 на реальном моторе)
-        servo_bounds = (math.radians(-90), math.radians(90))
+        self.servo_bounds = (math.radians(-90), math.radians(90))
 
         self.arm = Chain(name="My_5DOF_Arm", links=[
             OriginLink(),
-            URDFLink(name="base", origin_translation=[0, 0, 0], origin_orientation=[0, 0, 0],
-                     rotation=[0, 0, 1], joint_type="revolute", bounds=servo_bounds),
-            URDFLink(name="shoulder", origin_translation=[0, 0, 0.05], origin_orientation=[0, 0, 0],
-                     rotation=[0, 1, 0], joint_type="revolute", bounds=servo_bounds),
-            URDFLink(name="elbow", origin_translation=[0, 0, 0.12], origin_orientation=[0, 0, 0],
-                     rotation=[0, 1, 0], joint_type="revolute", bounds=servo_bounds),
-            URDFLink(name="forearm", origin_translation=[0, 0, 0.14], origin_orientation=[0, 0, 0],
-                     rotation=[0, 0, 1], joint_type="revolute", bounds=servo_bounds),
-            URDFLink(name="wrist", origin_translation=[0, 0, 0.07], origin_orientation=[0, 0, 0],
-                     rotation=[0, 1, 0], joint_type="revolute", bounds=servo_bounds),
-            URDFLink(name="gripper_tcp", origin_translation=[0, 0, 0.085], origin_orientation=[0, 0, 0],
-                     rotation=None, joint_type="fixed")
-        ], active_links_mask=[False, True, True, True, True, True, False])
+            URDFLink(
+                name=self.chain_config['Base']['name'],
+                origin_translation=eval(self.chain_config['Base']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Base']['origin_orientation']),
+                rotation=eval(self.chain_config['Base']['rotation']),
+                joint_type=self.chain_config['Base']['joint_type'].strip('"'),
+                bounds=self.servo_bounds
+            ),
+            URDFLink(
+                name=self.chain_config['Shoulder']['name'],
+                origin_translation=eval(self.chain_config['Shoulder']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Shoulder']['origin_orientation']),
+                rotation=eval(self.chain_config['Shoulder']['rotation']),
+                joint_type=self.chain_config['Shoulder']['joint_type'].strip('"'),
+                bounds=self.servo_bounds
+            ),
+            URDFLink(
+                name=self.chain_config['Elbow']['name'],
+                origin_translation=eval(self.chain_config['Elbow']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Elbow']['origin_orientation']),
+                rotation=eval(self.chain_config['Elbow']['rotation']),
+                joint_type=self.chain_config['Elbow']['joint_type'].strip('"'),
+                bounds=self.servo_bounds
+            ),
+            URDFLink(
+                name=self.chain_config['Forearm']['name'],
+                origin_translation=eval(self.chain_config['Forearm']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Forearm']['origin_orientation']),
+                rotation=eval(self.chain_config['Forearm']['rotation']),
+                joint_type=self.chain_config['Forearm']['joint_type'].strip('"'),
+                bounds=self.servo_bounds
+            ),
+            URDFLink(
+                name=self.chain_config['Wrist']['name'],
+                origin_translation=eval(self.chain_config['Wrist']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Wrist']['origin_orientation']),
+                rotation=eval(self.chain_config['Wrist']['rotation']),
+                joint_type=self.chain_config['Wrist']['joint_type'].strip('"'),
+                bounds=self.servo_bounds
+            ),
+            URDFLink(
+                name=self.chain_config['Camera_tcp']['name'],
+                origin_translation=eval(self.chain_config['Camera_tcp']['origin_translation']),
+                origin_orientation=eval(self.chain_config['Camera_tcp']['origin_orientation']),
+                rotation=None,  # None из конфига
+                joint_type=self.chain_config['Camera_tcp']['joint_type'].strip('"'),
+                bounds=None  # У фиксированного звена нет границ
+            )
+        ], active_links_mask=eval(self.chain_config['Robot_chains_masks']['chains_mask']))
 
     def calculate_ik(self, x, y, z):
         """
