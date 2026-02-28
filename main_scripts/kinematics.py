@@ -64,24 +64,30 @@ class RobotArm:
             )
         ], active_links_mask=eval(self.chain_config['Robot_chains_masks']['chains_mask']))
 
-    def calculate_ik(self, x, y, z):
-        """
-        Обратная кинематика. Принимает координаты в метрах.
-        Возвращает массив из 5 углов (в градусах от 0 до 180) для сервоприводов.
-        """
+    def calculate_ik(self, x, y, z, initial_angles=None):
+        import math
+        import warnings
+
         target_position = [x, y, z]
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            # Считаем IK. optimizer="scalar" работает быстрее и точнее
-            ik_radians = self.arm.inverse_kinematics(target_position)
 
-        # Конвертируем радианы в градусы и сдвигаем ноль на 90 градусов
-        # ik_radians содержит 7 элементов (включая Origin и TCP). Берем с 1 по 5.
+            # ВАЖНО: Если переданы предыдущие углы - используем их как подсказку (Anti-Flip)
+            if initial_angles is not None:
+                # Переводим градусы Ардуино обратно в радианы системы IKPy
+                # Добавляем 0 в начало (для Origin) и 0 в конец (для камеры)
+                seed = [0] + [math.radians(a - 90) for a in initial_angles] + [0]
+                ik_radians = self.arm.inverse_kinematics(target_position, initial_position=seed)
+            else:
+                # Считаем с нуля (используется по умолчанию для движения по дуге)
+                ik_radians = self.arm.inverse_kinematics(target_position)
+
+        # Конвертация в градусы для Arduino (0..180)
         servo_angles = []
+        # Нам нужны моторы с индексами от 1 до 5
         for rad in ik_radians[1:6]:
             deg = math.degrees(rad)
-            # Сдвиг: математический 0 = 90 на сервоприводе
             servo_angle = int(round(deg + 90))
             servo_angles.append(servo_angle)
 
