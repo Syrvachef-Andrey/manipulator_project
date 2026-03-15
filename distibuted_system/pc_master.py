@@ -54,15 +54,25 @@ def main():
     gripper_close = 90
 
     test_scenario = [
-        {"x": 0.25, "y": 0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1.0, "text": "Приезд на старт"},
-        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 1.0, "text": "Единая длинная прямая"},
-        {"x": 0.10, "y": 0.00, "z": 0.25, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1.0, "text": "Нулевое положение"}
+        {"x": 0.25, "y": 0.20, "z": 0.20, "mode": "joint", "gripper": gripper_close, "steps": 50, "delay": 5,
+         "text": "Положение 1 (Приезд на старт)"},
+
+        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 5,
+         "text": "Положение 2 (длинная прямая через joint)"},
+
+        # ШАГ 3: Безопасный возврат в центр (строго "joint"!)
+        {"x": 0.0, "y": 0.00, "z": 0.25, "mode": "joint", "gripper": gripper_close, "steps": 50, "delay": 5,
+         "text": 'Нулевое положение'}
     ]
 
     print("\nЗапуск сценария")
 
     for i, step in enumerate(test_scenario):
         print(f"\nstep {i + 1}: {step['text']}")
+
+        if pi_socket:
+            print("Отправка координат на Raspberry Pi")
+            send_to_pi(pi_socket, step["x"], step["y"], step["z"])
 
         current_angles, current_pos = move_robot_to(
             robot=robot,
@@ -77,10 +87,6 @@ def main():
             steps=step["steps"],
             mode=step.get("mode", "joint")
         )
-
-        if pi_socket:
-            print("Отправка координат на Raspberry Pi")
-            send_to_pi(pi_socket, step["x"], step["y"], step["z"])
 
         if step["delay"] > 0:
             time.sleep(step["delay"])

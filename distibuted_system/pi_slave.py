@@ -1,5 +1,6 @@
 import socket
 import json
+import numpy as np
 import matplotlib.pyplot as plt
 from ikpy.chain import Chain
 from ikpy.link import OriginLink, URDFLink
@@ -29,7 +30,15 @@ def main():
     PORT = 65432
 
     plt.ion()
-    fig, ax = plt.subplots(subplot_kw={'projection': '3d'}, figsize=(6, 5))
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'}, figsize=(7, 6))
+
+    current_virt_angles = [0, 0, 0, 0, 0, 0]  # Начальные нули
+    virtual_robot.plot(current_virt_angles, ax, target=[0, 0, 0])
+    ax.set_xlim(-0.4, 0.4);
+    ax.set_ylim(-0.4, 0.4);
+    ax.set_zlim(0, 0.5)
+    plt.draw()
+    plt.pause(0.1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
@@ -47,19 +56,25 @@ def main():
 
                 coords = json.loads(data.decode('utf-8'))
                 target = [coords["x"], coords["y"], coords["z"]]
-                print(f"Получена команда: двигаться в {target}")
+                print(f"Вычисляю IK для цели: {target}")
 
-                virt_angles = virtual_robot.inverse_kinematics(target)
+                target_virt_angles = virtual_robot.inverse_kinematics(target)
 
-                ax.clear()
-                virtual_robot.plot(virt_angles, ax, target=target)
-                ax.set_title(f"Цифровой двойник\nЦель: X:{target[0]} Y:{target[1]} Z:{target[2]}")
-                ax.set_xlim(-0.4, 0.4)
-                ax.set_ylim(-0.4, 0.4)
-                ax.set_zlim(0, 0.5)
+                steps = 15
+                trajectory_angles = np.linspace(current_virt_angles, target_virt_angles, steps)
 
-                plt.draw()
-                plt.pause(0.01)
+                for frame_angles in trajectory_angles:
+                    ax.clear()
+                    virtual_robot.plot(frame_angles, ax, target=target)
+                    ax.set_title(f"Цифровой двойник\nВыполнение команды ПК")
+                    ax.set_xlim(-0.4, 0.4);
+                    ax.set_ylim(-0.4, 0.4);
+                    ax.set_zlim(0, 0.5)
+
+                    plt.draw()
+                    plt.pause(0.05)
+
+                current_virt_angles = target_virt_angles
 
     print("Соединение закрыто.")
     plt.ioff()
