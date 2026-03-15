@@ -65,15 +65,12 @@ class RobotArm:
         ], active_links_mask=eval(self.chain_config['Robot_chains_masks']['chains_mask']))
 
     def calculate_ik(self, x, y, z, initial_angles=None):
-        import math
-        import warnings
 
         target_position = [x, y, z]
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            # ВАЖНО: Если переданы предыдущие углы - используем их как подсказку (Anti-Flip)
             if initial_angles is not None:
                 # Переводим градусы Ардуино обратно в радианы системы IKPy
                 # Добавляем 0 в начало (для Origin) и 0 в конец (для камеры)

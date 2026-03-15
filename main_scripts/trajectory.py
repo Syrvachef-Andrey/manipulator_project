@@ -21,18 +21,16 @@ class TrajectoryPlanner:
             trajectory.append(step_angles)
         return trajectory
 
-    def generate_linear_trajectory(self, robot, start_angles, start_pos, end_pos, steps):
 
+    def generate_linear_trajectory(self, robot, start_angles, start_pos, end_pos, steps):
         raw_trajectory = []
         last_angles = start_angles
 
-        # 1. МАКСИМАЛЬНЫЙ СКАЧОК: мотор не может повернуться больше чем на 4 градуса за 1 шаг
-        MAX_JUMP = 5.0
+        max_jump = 5.0
 
         for i in range(steps + 1):
             t = i / float(steps) if steps > 0 else 1.0
 
-            # Плавный разгон и торможение вдоль линии
             smooth_t = (1 - math.cos(t * math.pi)) / 2.0
 
             cx = start_pos[0] + (end_pos[0] - start_pos[0]) * smooth_t
@@ -44,23 +42,20 @@ class TrajectoryPlanner:
             safe_angles = []
             for prev_a, new_a in zip(last_angles, target_angles):
                 diff = new_a - prev_a
-                # Если алгоритм сошел с ума и выдал скачок - обрезаем его
-                if diff > MAX_JUMP:
-                    safe_angles.append(prev_a + MAX_JUMP)
-                elif diff < -MAX_JUMP:
-                    safe_angles.append(prev_a - MAX_JUMP)
+                if diff > max_jump:
+                    safe_angles.append(prev_a + max_jump)
+                elif diff < -max_jump:
+                    safe_angles.append(prev_a - max_jump)
                 else:
                     safe_angles.append(new_a)
 
             raw_trajectory.append(safe_angles)
             last_angles = safe_angles
 
-        # Усредняем соседние кадры, чтобы траектория стала идеальной
         smoothed_trajectory = []
-        window_size = 5  # Размер окна сглаживания (чем больше, тем плавнее, но может чуть скруглить углы)
+        window_size = 5
 
         for i in range(len(raw_trajectory)):
-            # Берем несколько кадров до и после текущего
             start_idx = max(0, i - window_size)
             end_idx = min(len(raw_trajectory), i + window_size + 1)
             window = raw_trajectory[start_idx:end_idx]
