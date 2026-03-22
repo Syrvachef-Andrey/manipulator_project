@@ -1,4 +1,3 @@
-import numpy as np
 import math
 import warnings
 from ikpy.chain import Chain
