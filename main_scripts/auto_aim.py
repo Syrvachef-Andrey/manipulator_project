@@ -31,7 +31,6 @@ def get_green_object_data(cap, center_x, center_y):
         largest_contour = max(contours, key=cv2.contourArea)
 
         if cv2.contourArea(largest_contour) > 1000:
-
             # Bounding Box для ширины объекта
             x, y, w, h = cv2.boundingRect(largest_contour)
 
@@ -66,9 +65,8 @@ def main():
     cam_center_x = int(width / 2)
     cam_center_y = int(height / 2)
 
-    REAL_WIDTH_M = 0.07
-    FOCAL_LENGTH_PX = 650.0
-    TARGET_DISTANCE_M = 0.08
+    # Удалили старую математику камеры, оставили только целевую дистанцию 10 см (0.10 м)
+    TARGET_DISTANCE_M = 0.10
 
     Kp_x = 0.00008
     Kp_y = 0.00008
@@ -80,7 +78,10 @@ def main():
     current_angles = [90, 90, 90, 90, 90]
     gripper_angle = 90
 
-    print("Запуск режима 3D авто-наведения! Покажи темно-зеленый куб. 'q' для выхода.")
+    # Стартовое значение для лазера (чтобы не было ошибки в первом кадре)
+    distance_mm = 100
+
+    print("Запуск режима авто-наведения с ЛАЗЕРОМ! Покажи темно-зеленый куб. 'q' для выхода.")
 
     while True:
         err_x, err_y, pixel_w, display_frame = get_green_object_data(cap, cam_center_x, cam_center_y)
@@ -90,12 +91,14 @@ def main():
 
         if err_x is not None and err_y is not None and pixel_w > 0:
 
-            estimated_distance = (REAL_WIDTH_M * FOCAL_LENGTH_PX) / pixel_w
+            # Переводим миллиметры с лазера в метры для расчетов IK
+            estimated_distance = distance_mm / 1000.0
             dist_error = estimated_distance - TARGET_DISTANCE_M
 
-            cv2.putText(display_frame, f"Dist: {estimated_distance * 100:.1f} cm", (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+            cv2.putText(display_frame, f"Laser Dist: {distance_mm} mm", (20, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
+            # Проверяем мертвые зоны
             if abs(err_x) > DEADZONE_XY or abs(err_y) > DEADZONE_XY or abs(dist_error) > DEADZONE_Z:
 
                 # 1. FK для реальной позиции
@@ -105,7 +108,7 @@ def main():
                 real_y = real_pos_matrix[1, 3]
                 real_z = real_pos_matrix[2, 3]
 
-                # 2. Сдвиг
+                # 2. Сдвиг (П-регулятор)
                 delta_y = err_x * Kp_x
                 delta_x = err_y * Kp_y
                 delta_z = dist_error * Kp_z
@@ -119,7 +122,7 @@ def main():
                 target_y = max(-0.25, min(target_y, 0.25))
                 target_z = max(0.10, min(target_z, 0.40))
 
-                # 4. IK и шаг
+                # 4. IK и вычисление шага
                 target_angles = robot.calculate_ik(target_x, target_y, target_z, initial_angles=current_angles)
 
                 safe_angles = []
@@ -132,8 +135,16 @@ def main():
                     else:
                         safe_angles.append(targ)
 
-                arduino_mcu.send_angles(safe_angles, gripper_angle)
+                # Обновляем текущие углы
                 current_angles = safe_angles
+
+            # 5. ОТПРАВКА И ПОЛУЧЕНИЕ ДАННЫХ (Выполняется каждый кадр!)
+            # Отправляем углы на моторы и ловим ответ от лазера для следующего кадра
+            received_dist = arduino_mcu.send_angles(current_angles, gripper_angle)
+
+            # Если лазер не моргнул и данные пришли корректно, обновляем дистанцию
+            if received_dist is not None:
+                distance_mm = received_dist
 
         cv2.imshow("Robot 3D Vision", display_frame)
 
