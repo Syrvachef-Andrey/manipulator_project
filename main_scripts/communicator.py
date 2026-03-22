@@ -16,7 +16,7 @@ class RobotSerial:
 
     def send_angles(self, angles_list, gripper_angle):
         """
-        Отправляет список из 5 углов и угла гриппера в Arduino.
+        Отправляет список из 5 углов
         """
         if not self.arduino:
             print("Нет соединения с Arduino. Данные не отправлены.")
@@ -28,7 +28,14 @@ class RobotSerial:
         data_string = ",".join(full_command) + "\n"
 
         self.arduino.write(data_string.encode('utf-8'))
-        # print(f"Отправлено: {data_string.strip()}")
+        print(f"Отправлено: {data_string.strip()}")
+
+        response = self.arduino.readline().decode('utf-8', errors='ignore').strip()
+
+        if response.isdigit():
+            return int(response)
+        else:
+            return None
 
     def close(self):
         if self.arduino:
