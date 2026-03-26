@@ -92,6 +92,19 @@ def main():
                 time.sleep(step["delay"])
     except KeyboardInterrupt:
         print("АВАРИЙНАЯ ОСТАНОВКА СЦЕНАРИЯ")
+        print("Безопасное возвращение домой")
+
+        time.sleep(0.5)
+
+        home_scenario = [0.0, 0.0, 0.20]
+
+        home_coord = robot.calculate_ik(home_scenario[0], home_scenario[1], home_scenario[2])
+
+        home_trajectory = planner.generate_joint_trajectory(current_angles, home_coord, steps=100)
+
+        for angles in home_trajectory:
+            arduino_mcu.send_angles(angles, gripper_angle=90)
+            time.sleep(0.02)
     else:
         print("\n--- СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН ---")
     finally:
