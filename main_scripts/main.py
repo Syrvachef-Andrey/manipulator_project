@@ -7,30 +7,29 @@ import configparser
 
 def move_robot_to(robot, planner, arduino_mcu, current_angles, current_pos, target_x, target_y, target_z, gripper_angle,
                   steps=50, mode="joint"):
-    """
-    Универсальная функция для перемещения робота.
-    Поддерживает движение по дуге (joint) и по прямой (linear).
-    """
-    print(
-        f"-> Едем в точку: X:{target_x * 100:.1f}см, Y:{target_y * 100:.1f}см, Z:{target_z * 100:.1f}см | Режим: {mode} | Захват: {gripper_angle}°")
+
+    print(f"-> Едем в точку: X:{target_x * 100:.1f}см, Y:{target_y * 100:.1f}см, Z:{target_z * 100:.1f}см | Режим: {mode} | Захват: {gripper_angle}°")
+
+    if target_x < 0.10:
+        print(f"Внимание: опасное значение будущей координаты x - {target_x}, приравнивание её к 0.10")
+        target_x = 0.10
+    if target_z < 0.05:
+        print(f"Внимание: опасное значение будущей координаты y - {target_y}, приравнивание её к 0.05")
+        target_z = 0.05
 
     end_pos = [target_x, target_y, target_z]
 
     if mode == "linear":
-        # Движение строго по прямой линии в декартовом пространстве
         trajectory = planner.generate_linear_trajectory(robot, current_angles, current_pos, end_pos, steps)
     else:
-        # Рассчитываем обратную кинематику для целевой точки (движение по дуге)
         target_angles = robot.calculate_ik(target_x, target_y, target_z)
-        # Генерируем траекторию от текущих углов к целевым
         trajectory = planner.generate_joint_trajectory(current_angles, target_angles, steps=steps)
 
-    # Отправляем кадры на Arduino
     for frame_angles in trajectory:
         arduino_mcu.send_angles(frame_angles, gripper_angle)
-        time.sleep(0.02)  # Пауза 20 мс
+        time.sleep(0.02)
 
-    # Возвращаем последние углы траектории и новые координаты
+
     return trajectory[-1], end_pos
 
 
@@ -45,68 +44,58 @@ def main():
 
     time.sleep(2)  # Ждем перезагрузки Arduino
 
-    # Исходное положение робота при включении
     current_angles = [90, 90, 90, 90, 90]
-    # Примерная позиция, в которой находится робот при углах 90 (ровно вверх)
     current_pos = [0.0, 0.0, 0.40]
 
-    gripper_open = 0
     gripper_close = 90
 
-    # ==========================================
-    # ТВОЙ СЦЕНАРИЙ ТЕСТИРОВАНИЯ (ПЛЕЙЛИСТ)
-    # ==========================================
+
     test_scenario = [
         # ШАГ 1: Мягко приезжаем на стартовую точку по дуге (безопасно)
-        {"x": 0.25, "y": 0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1.0,
+        {"x": 0.25, "y": 0.20, "z": 0.20, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 0.5,
          "text": "Положение 1 (Приезд на старт)"},
 
-        # ШАГ 2: ОДНА длинная непрерывная линия.
-        # Увеличили steps до 300, чтобы фильтрам было с чем работать
-        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1.0,
+        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 1,
          "text": "Положение 2 (Единая длинная прямая)"},
 
         # ШАГ 3: Безопасный возврат в центр (строго "joint"!)
-        {"x": 0.0, "y": 0.00, "z": 0.25, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1.0,
+        {"x": 0.0, "y": 0.00, "z": 0.25, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 0.5,
          "text": 'Безопасное нулевое положение'}
     ]
 
-    # ==========================================
-    # ВЫПОЛНЕНИЕ СЦЕНАРИЯ
-    # ==========================================
     print("\n--- ЗАПУСК ТЕСТОВОГО СЦЕНАРИЯ ---")
 
-    for i, step in enumerate(test_scenario):
-        print(f"\nВыполняю шаг {i + 1} из {len(test_scenario)}...")
+    try:
+        for i, step in enumerate(test_scenario):
+            print(f"\nВыполняю шаг {i + 1} из {len(test_scenario)}...")
 
-        # Забираем режим из сценария (если не указан, берем "joint" по умолчанию)
-        move_mode = step.get("mode", "joint")
+            move_mode = step.get("mode", "joint")
 
-        # Вызываем нашу универсальную функцию перемещения (теперь она возвращает 2 значения)
-        current_angles, current_pos = move_robot_to(
-            robot=robot,
-            planner=planner,
-            arduino_mcu=arduino_mcu,
-            current_angles=current_angles,
-            current_pos=current_pos,  # Передаем откуда едем
-            target_x=step["x"],
-            target_y=step["y"],
-            target_z=step["z"],
-            gripper_angle=step["gripper"],
-            steps=step["steps"],
-            mode=move_mode
-        )
+            current_angles, current_pos = move_robot_to(
+                robot=robot,
+                planner=planner,
+                arduino_mcu=arduino_mcu,
+                current_angles=current_angles,
+                current_pos=current_pos,
+                target_x=step["x"],
+                target_y=step["y"],
+                target_z=step["z"],
+                gripper_angle=step["gripper"],
+                steps=step["steps"],
+                mode=move_mode
+            )
 
-        if step.get('text'):
-            print(step['text'])
+            if step.get('text'):
+                print(step['text'])
 
-        # Ждем указанное время перед следующим шагом
-        if step["delay"] > 0:
-            time.sleep(step["delay"])
-
-    print("\n--- СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН ---")
-    time.sleep(1)
-    arduino_mcu.close()
+            if step["delay"] > 0:
+                time.sleep(step["delay"])
+    except KeyboardInterrupt:
+        print("АВАРИЙНАЯ ОСТАНОВКА СЦЕНАРИЯ")
+    finally:
+        print("\n--- СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН ---")
+        time.sleep(1)
+        arduino_mcu.close()
 
 
 if __name__ == "__main__":
