@@ -10,9 +10,9 @@ def move_robot_to(robot, planner, arduino_mcu, current_angles, current_pos, targ
 
     print(f"-> Едем в точку: X:{target_x * 100:.1f}см, Y:{target_y * 100:.1f}см, Z:{target_z * 100:.1f}см | Режим: {mode} | Захват: {gripper_angle}°")
 
-    if target_x < 0.10:
+    if target_x < 0:
         print(f"Внимание: опасное значение будущей координаты x - {target_x}, приравнивание её к 0.10")
-        target_x = 0.10
+        target_x = 0
     if target_z < 0.05:
         print(f"Внимание: опасное значение будущей координаты y - {target_y}, приравнивание её к 0.05")
         target_z = 0.05
@@ -52,14 +52,14 @@ def main():
 
     test_scenario = [
         # ШАГ 1: Мягко приезжаем на стартовую точку по дуге (безопасно)
-        {"x": 0.25, "y": 0.20, "z": 0.20, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 0.5,
+        {"x": 0.25, "y": 0.20, "z": 0.20, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
          "text": "Положение 1 (Приезд на старт)"},
 
-        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 1,
+        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
          "text": "Положение 2 (Единая длинная прямая)"},
 
         # ШАГ 3: Безопасный возврат в центр (строго "joint"!)
-        {"x": 0.0, "y": 0.00, "z": 0.25, "mode": "joint", "gripper": gripper_close, "steps": 200, "delay": 0.5,
+        {"x": 0.0, "y": 0.00, "z": 0.30, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
          "text": 'Безопасное нулевое положение'}
     ]
 
@@ -92,8 +92,9 @@ def main():
                 time.sleep(step["delay"])
     except KeyboardInterrupt:
         print("АВАРИЙНАЯ ОСТАНОВКА СЦЕНАРИЯ")
-    finally:
+    else:
         print("\n--- СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН ---")
+    finally:
         time.sleep(1)
         arduino_mcu.close()
 
