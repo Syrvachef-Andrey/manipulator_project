@@ -7,7 +7,6 @@ class RobotSerial:
         try:
             self.arduino = serial.Serial(port, baudrate, timeout=1)
             print(f"Подключено к Arduino на порту {port}.")
-            # Arduino перезагружается при открытии порта. Ждем 2 секунды.
             time.sleep(2)
         except Exception as e:
             print(f"Ошибка подключения к Arduino: {e}")
@@ -15,9 +14,6 @@ class RobotSerial:
             exit()
 
     def send_angles(self, angles_list, gripper_angle):
-        """
-        Отправляет список из 5 углов
-        """
         if not self.arduino:
             print("Нет соединения с Arduino. Данные не отправлены.")
             return
