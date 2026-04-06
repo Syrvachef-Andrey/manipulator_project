@@ -10,10 +10,7 @@ def click_event(event, x, y, flags, params):
         cv2.imshow('Click 4 corners', img)
 
 # Загружаем твою картинку
-img = cv2.imread('.\images\img.png')
-
-# Обязательно поворачиваем её так же, как в твоем основном коде!
-img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+img = cv2.imread('.\images\image.png')
 
 cv2.imshow('Click 4 corners', img)
 # Привязываем нашу функцию клика к окну
