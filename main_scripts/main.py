@@ -13,9 +13,9 @@ def move_robot_to(robot, planner, arduino_mcu, current_angles, current_pos, targ
     if target_x < 0:
         print(f"Внимание: опасное значение будущей координаты x - {target_x}, приравнивание её к 0.10")
         target_x = 0
-    if target_z < 0.05:
-        print(f"Внимание: опасное значение будущей координаты y - {target_y}, приравнивание её к 0.05")
-        target_z = 0.05
+    if target_z < 0.03:
+        print(f"Внимание: опасное значение будущей координаты z - {target_y}, приравнивание её к 0.03")
+        target_z = 0.03
 
     end_pos = [target_x, target_y, target_z]
 
@@ -47,20 +47,37 @@ def main():
     current_angles = [90, 90, 90, 90, 90]
     current_pos = [0.0, 0.0, 0.40]
 
-    gripper_close = 90
-
+    gripper_close = 60
+    gripper_open = 0
 
     test_scenario = [
         # ШАГ 1: Мягко приезжаем на стартовую точку по дуге (безопасно)
-        {"x": 0.25, "y": 0.20, "z": 0.20, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
+        {"x": 0.10, "y": 0.20, "z": 0.05, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
          "text": "Положение 1 (Приезд на старт)"},
 
-        {"x": 0.25, "y": -0.20, "z": 0.15, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
+        {"x": 0.10, "y": 0.0, "z": 0.3, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
          "text": "Положение 2 (Единая длинная прямая)"},
 
-        # ШАГ 3: Безопасный возврат в центр (строго "joint"!)
-        {"x": 0.0, "y": 0.00, "z": 0.30, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 0.5,
-         "text": 'Безопасное нулевое положение'}
+        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.10, "y": 0.0, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.0, "y": 0.0, "z": 0.4, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"}
     ]
 
     print("\n--- ЗАПУСК ТЕСТОВОГО СЦЕНАРИЯ ---")
