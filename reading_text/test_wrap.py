@@ -7,7 +7,7 @@ from ultralytics import YOLO
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # 1. Настройки путей
-model_path = './model/best.pt'
+model_path = 'model_shield_detection/best.pt'
 image_path = 'images_for_test_text_tesseract/image.png'
 
 # 2. Загружаем обученную модель
