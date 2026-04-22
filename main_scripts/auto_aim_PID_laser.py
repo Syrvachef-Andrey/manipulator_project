@@ -6,6 +6,32 @@ from kinematics import RobotArm
 from communicator import RobotSerial
 from trajectory import TrajectoryPlanner
 
+class PIDController:
+    def __init__(self, Kp, Ki, Kd, max_integral=1.0):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+
+        self.integral = 0.0
+        self.prev_error = 0.0
+
+        self.max_integral = max_integral
+
+    def update(self, error, dt):
+        p_term = self.Kp * error
+
+        self.integral += error * dt
+
+        self.integral = max(-self.max_integral, min(self.integral, self.max_integral))
+        i_term = self.Ki * self.integral
+
+        d_term = 0.0
+        if dt > 0:
+            d_term = self.Kd * ((error - self.prev_error) / dt)
+
+        self.prev_error = error
+
+        return p_term + i_term + d_term
 
 def get_green_object_data(cap, center_x, center_y):
     ret, frame = cap.read()
@@ -65,21 +91,24 @@ def main():
     cam_center_x = int(width / 2)
     cam_center_y = int(height / 2)
 
-    # Удалили старую математику камеры, оставили только целевую дистанцию 10 см (0.10 м)
-    TARGET_DISTANCE_M = 0.10
+    TARGET_DISTANCE_M = 0.20
 
-    Kp_x = 0.00008
-    Kp_y = 0.00008
-    Kp_z = 0.1
+    pid_x = PIDController(Kp=0.00003, Ki=0.00001, Kd=0.0)
+
+    pid_y = PIDController(Kp=0.00003, Ki=0.00001, Kd=0.0)
+
+    pid_z = PIDController(Kp=0.1, Ki=0.01, Kd=0.05)
 
     DEADZONE_XY = 15
-    DEADZONE_Z = 0.01
+    DEADZONE_Z = 0.05
+
+    last_tame = time.time()
 
     current_angles = [90, 90, 90, 90, 90]
     gripper_angle = 90
 
     # Стартовое значение для лазера (чтобы не было ошибки в первом кадре)
-    distance_mm = 100
+    distance_mm = 200
 
     print("Запуск режима авто-наведения с ЛАЗЕРОМ! Покажи темно-зеленый куб. 'q' для выхода.")
 
@@ -89,9 +118,11 @@ def main():
         cv2.line(display_frame, (cam_center_x - 20, cam_center_y), (cam_center_x + 20, cam_center_y), (0, 255, 255), 2)
         cv2.line(display_frame, (cam_center_x, cam_center_y - 20), (cam_center_x, cam_center_y + 20), (0, 255, 255), 2)
 
-        if err_x is not None and err_y is not None and pixel_w > 0:
+        current_time = time.time()
+        dt = current_time - last_tame
+        last_tame = current_time
 
-            # Переводим миллиметры с лазера в метры для расчетов IK
+        if err_x is not None and err_y is not None and pixel_w > 0:
             estimated_distance = distance_mm / 1000.0
             dist_error = estimated_distance - TARGET_DISTANCE_M
 
@@ -109,15 +140,15 @@ def main():
                 real_z = real_pos_matrix[2, 3]
 
                 # 2. Сдвиг (П-регулятор)
-                delta_y = err_x * Kp_x
-                delta_x = err_y * Kp_y
-                delta_z = dist_error * Kp_z
+                delta_x = pid_y.update(-err_y, dt)
+                delta_y = pid_x.update(err_x, dt)
+                delta_z = pid_z.update(dist_error, dt)
 
                 target_y = real_y - delta_y
                 target_x = real_x + delta_x
                 target_z = real_z - delta_z
 
-                # 3. Ограничители
+                # 3. Ограничители (чтобы робот не сломал себя)
                 target_x = max(0.15, min(target_x, 0.35))
                 target_y = max(-0.25, min(target_y, 0.25))
                 target_z = max(0.10, min(target_z, 0.40))
