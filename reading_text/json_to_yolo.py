@@ -3,7 +3,7 @@ import os
 
 # Имя твоего скачанного файла
 json_file = 'project-3-at-2026-04-06-17-52-c932cc79.json'
-output_dir = 'content/labels'
+output_dir = 'dataset_shield/labels'
 
 # Создаем папку для текстовых файлов
 os.makedirs(output_dir, exist_ok=True)
