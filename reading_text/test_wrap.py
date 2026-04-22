@@ -8,7 +8,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 
 # 1. Настройки путей
 model_path = './model/best.pt'
-image_path = './images/image.png'
+image_path = 'images_for_test_text_tesseract/image.png'
 
 # 2. Загружаем обученную модель
 print("Загрузка модели...")
