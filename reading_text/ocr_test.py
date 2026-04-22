@@ -3,16 +3,14 @@ import pytesseract
 import numpy as np
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-opened_image = cv2.imread('.\images\img.png')
-
-rotated_opened_image = cv2.rotate(opened_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+opened_image = cv2.imread('.\images\image.png')
 
 # 1. Твои координаты с радара
 pts_src = np.array([
-    [156, 79],
-    [508, 85],
-    [512, 276],
-    [151, 276]
+    [549, 234],
+    [1050, 226],
+    [1064, 532],
+    [543, 512]
 ], dtype=np.float32)
 
 width, height = 350, 200
@@ -25,7 +23,7 @@ pts_dst = np.array([
 ], dtype=np.float32)
 
 matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
-warped_image = cv2.warpPerspective(rotated_opened_image, matrix, (width, height))
+warped_image = cv2.warpPerspective(opened_image, matrix, (width, height))
 
 gray_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
 
@@ -36,7 +34,7 @@ text = pytesseract.image_to_string(binary_image, lang='eng+rus', config='--psm 6
 cv2.imshow("warped image", warped_image)
 cv2.imshow("binary image", binary_image)
 cv2.imshow("gray_image", gray_image)
-cv2.imshow("rotated_opened_image", rotated_opened_image)
+cv2.imshow('opened_image', opened_image)
 
 print(text)
 cv2.waitKey()

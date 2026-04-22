@@ -52,39 +52,48 @@ if len(results[0].boxes) > 0:
         matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
         warped_img = cv2.warpPerspective(img, matrix, (max_width, max_height))
 
-        # 8. --- МАГИЯ OCR ---
-        print("Чтение текста с шильдика...")
+        # 8. --- УДАЛЕНИЕ РЖАВЧИНЫ ПО ЦВЕТУ (HSV MASKING) ---
+        print("Химическая очистка ржавчины и чтение текста...")
 
-        # 1. Переводим раскатанную картинку в градации серого
-        gray_img = cv2.cvtColor(warped_img, cv2.COLOR_BGR2GRAY)
+        # 1. Переводим цветную раскатанную картинку в пространство HSV (Оттенок, Насыщенность, Яркость)
+        hsv_img = cv2.cvtColor(warped_img, cv2.COLOR_BGR2HSV)
 
-        # 2. Применяем только адаптивный фильтр (как в твоем удачном тесте)
-        # Он сам отлично компенсирует кривое освещение и блики на металле
+        # 2. Задаем "вилку" цвета ржавчины.
+        # Оттенки от красного (0) до желтого (30). Если ржавчина темная, можно снизить пороги.
+        lower_rust = np.array([0, 40, 40])
+        upper_rust = np.array([30, 255, 255])
+
+        # 3. Ищем все пиксели, попадающие в этот рыже-коричневый диапазон
+        rust_mask = cv2.inRange(hsv_img, lower_rust, upper_rust)
+
+        # 4. Копируем исходник и "закрашиваем" найденную ржавчину цветом светлого металла
+        clean_warped = warped_img.copy()
+        clean_warped[rust_mask > 0] = [200, 200, 200]  # BGR формат (светло-серый)
+
+        # 5. ВОЗВРАЩАЕМСЯ К ТВОЕМУ ЛЮБИМОМУ ФИЛЬТРУ
+        gray_img = cv2.cvtColor(clean_warped, cv2.COLOR_BGR2GRAY)
+
+        # Тот самый адаптивный порог, который отработал лучше всего
         binary_image = cv2.adaptiveThreshold(
-            gray_img,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            21,
-            5
+            gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 5
         )
 
-        # 3. Запускаем распознавание
-        text = pytesseract.image_to_string(binary_image, lang='eng+rus', config='--psm 4')
+        # 6. Распознавание
+        text = pytesseract.image_to_string(binary_image, lang='eng+rus', config='--psm 11')
 
-        # Красиво выводим результат в консоль
+        # Вывод окон для контроля
+        cv2.imshow("1. Found Rust (Mask)", rust_mask)
+        cv2.imshow("2. Cleaned Metal", clean_warped)
+        cv2.imshow("3. Your Favorite Binary", binary_image)
+
         print("\n" + "=" * 40)
         print("📄 РЕЗУЛЬТАТ РАСПОЗНАВАНИЯ:")
         print("=" * 40)
         if text.strip():
             print(text.strip())
         else:
-            print("[Не удалось прочитать текст. Возможно, стоит настроить контраст]")
+            print("[Пусто]")
         print("=" * 40 + "\n")
-
-        cv2.imshow("Original", img)
-        cv2.imshow("Warped (Color)", warped_img)
-        cv2.imshow("Filtered for Tesseract", binary_image)  # Показываем, что именно видит движок
 
         print("Готово! Нажми любую клавишу в окне картинки, чтобы закрыть.")
         cv2.waitKey(0)
