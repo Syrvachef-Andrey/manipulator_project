@@ -49,32 +49,9 @@ def main():
 
     gripper_close = 60
     gripper_open = 0
-
     test_scenario = [
-        # ШАГ 1: Мягко приезжаем на стартовую точку по дуге (безопасно)
         {"x": 0.10, "y": 0.20, "z": 0.05, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
          "text": "Положение 1 (Приезд на старт)"},
-
-        {"x": 0.10, "y": 0.0, "z": 0.3, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.10, "y": 0.0, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.20, "y": -0.4, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
-
-        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
-         "text": "Положение 2 (Единая длинная прямая)"},
 
         {"x": 0.0, "y": 0.0, "z": 0.4, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
          "text": "Положение 2 (Единая длинная прямая)"}
@@ -107,6 +84,13 @@ def main():
 
             if step["delay"] > 0:
                 time.sleep(step["delay"])
+
+        print("\n--- СЦЕНАРИЙ МАНИПУЛЯТОРА ВЫПОЛНЕН. АКТИВАЦИЯ КОНВЕЙЕРА ---")
+        arduino_mcu.send_command_by_radio("MOVE:20")
+
+        print("Ожидание перемещения ленты конвейера на 20 см...")
+        time.sleep(4)
+
     except KeyboardInterrupt:
         print("АВАРИЙНАЯ ОСТАНОВКА СЦЕНАРИЯ")
         print("Безопасное возвращение домой")

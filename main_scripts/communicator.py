@@ -33,6 +33,21 @@ class RobotSerial:
         else:
             return None
 
+    def send_command_by_radio(self, radio_command):
+        if not self.arduino:
+            print("Нет соединения с Arduino. Радиокоманда не отправлена.")
+            return None
+
+        # Формируем пакет: "RADIO:MOVE:20\n"
+        full_command = f"RADIO:{radio_command}\n"
+        self.arduino.write(full_command.encode('utf-8'))
+        print(f"-> [RADIO MASTER] Отправка команды в эфир: {radio_command}")
+
+        # Читаем статус отправки (RADIO_TX_OK или RADIO_TX_FAIL)
+        response = self.arduino.readline().decode('utf-8', errors='ignore').strip()
+        print(f"<- [RADIO MASTER] Статус: {response}")
+        return response
+
     def close(self):
         if self.arduino:
             self.arduino.close()
