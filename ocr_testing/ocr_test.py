@@ -1,11 +1,16 @@
 import cv2
 import pytesseract
 import numpy as np
+import configparser
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-opened_image = cv2.imread('.\images\image.png')
+ocr_config = configparser.ConfigParser()
+ocr_config.read('config.ini')
+ocr_path = ocr_config['ocr_model']['path_to_paddle_ocr_model']
 
-# 1. Твои координаты с радара
+pytesseract.pytesseract.tesseract_cmd = ocr_config['ocr_model']['path_to_tesseract_ocr_model']
+
+opened_image = cv2.imread('images_for_test_text_tesseract/image.png')
+
 pts_src = np.array([
     [549, 234],
     [1050, 226],
