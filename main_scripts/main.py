@@ -53,6 +53,27 @@ def main():
         {"x": 0.10, "y": 0.20, "z": 0.05, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
          "text": "Положение 1 (Приезд на старт)"},
 
+        {"x": 0.10, "y": 0.0, "z": 0.3, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.10, "y": 0.0, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.10, "y": 0.0, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.05, "mode": "joint", "gripper": gripper_close, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
+        {"x": 0.20, "y": -0.4, "z": 0.2, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
+         "text": "Положение 2 (Единая длинная прямая)"},
+
         {"x": 0.0, "y": 0.0, "z": 0.4, "mode": "joint", "gripper": gripper_open, "steps": 100, "delay": 1,
          "text": "Положение 2 (Единая длинная прямая)"}
     ]
